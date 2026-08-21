@@ -2,15 +2,15 @@ module Laboratorio01 where
 
 -- Reto 1
 distanciaOrigen :: Double -> Double -> Double
-distanciaOrigen = undefined
+distanciaOrigen x y = sqrt((x^2) + (y^2))
 
 -- Reto 2
 sumaCuadradosPares :: [Int] -> Int
-sumaCuadradosPares = undefined
+sumaCuadradosPares xs = sum (map (^2) (filter even xs))
 
 -- Reto 3
 aplicaTresVeces :: (a -> a) -> a -> a
-aplicaTresVeces = undefined
+aplicaTresVeces f x = f (f (f x))
 
 -- Reto 4
 varianza2 :: Double -> Double -> Double
