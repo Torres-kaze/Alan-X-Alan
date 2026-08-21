@@ -14,18 +14,18 @@ aplicaTresVeces f x = f (f (f x))
 
 -- Reto 4
 varianza2 :: Double -> Double -> Double
-varianza2 x y = 
-let media = (x + y)/2
-in ((x - media)^2 + (y - media)^2) / 2
+varianza2 x y =
+  let media = (x + y) / 2
+   in ((x - media) ^ 2 + (y - media) ^ 2) / 2
 
 -- Reto 5
 clasificaTemperatura :: Int -> String
-clasificaTemperatura n 
-|n <= 0 = "Frio extremo"
-|n <= 15 = "Frio"
-|n <= 25 = "Templado"
-|n <= 35 = "Calido"
-|n >= 36 = "Calor extremo"
+clasificaTemperatura t
+  | t <= 0    = "frio extremo"
+  | t <= 15   = "frio"
+  | t <= 25   = "templado"
+  | t <= 35   = "calido"
+  | otherwise = "calor extremo"
 
 -- Reto 6
 intercala :: a -> [a] -> [a]
