@@ -21,7 +21,7 @@ tokens :-
   \)                    { \_ -> TokenPC }
   \+                    { \_ -> TokenSuma }
   \-                    { \_ -> TokenResta }
-  not                   { \_ -> TokenNot }
+  "not"                   { \_ -> TokenNot }
 
   "#t"                  { \_ -> TokenBool True }
   "#f"                  { \_ -> TokenBool False }
@@ -34,19 +34,19 @@ tokens :-
   -- Agrega aqui las reglas lexicas para:
   --   and, or, *, /, expt, <, >, <=, >=, eq, add1, sub1, zero?
   -- Recuerda reconocer <= y >= como tokens completos.
-  and                   { \_ -> TokenAnd }
-  or                    { \_ -> TokenOr }
+  "and"                   { \_ -> TokenAnd }
+  "or"                    { \_ -> TokenOr }
   \*                    { \_ -> TokenMul }
   \/                    { \_ -> TokenDiv }
-  expt                  { \_ -> TokenExpt }
-  <                     { \_ -> TokenLT }
-  >                     { \_ -> TokenGT }
+  "expt"                  { \_ -> TokenExpt }
+  \<                     { \_ -> TokenLT }
+  \>                     { \_ -> TokenGT }
   "<="                  { \_ -> TokenLE }
   ">="                  { \_ -> TokenGE }
-  eq                    { \_ -> TokenEq }
-  add1                  { \_ -> TokenAdd1 }
-  sub1                  { \_ -> TokenSub1 }
-  zero?                { \_ -> TokenZeroP }
+  "eq"                    { \_ -> TokenEq }
+  "add1"                  { \_ -> TokenAdd1 }
+  "sub1"                  { \_ -> TokenSub1 }
+  "zero?"                { \_ -> TokenZeroP }
 
   .                     { \s -> error ("Lexical error: caracter no reconocido = "
                                       ++ show s
@@ -75,7 +75,7 @@ data Token
   | TokenEq
   | TokenPA
   | TokenPC
-  deriving (Eq, Show)
+    deriving (Eq, Show)
 
 normalizeSpaces :: String -> String
 normalizeSpaces = map (\c -> if isSpace c then '\x20' else c)

@@ -31,16 +31,14 @@ import Lexer (Token(..), lexer)
       ')'             { TokenPC }
 
 %%
-
-ASA : nat                      { Num $1 }
-    | bool                     { Boolean $1 }
-
 -- RETO 2:
 -- Agrega las producciones para:
 --   * operadores n-arios con al menos dos argumentos;
 --   * operadores estrictamente binarios: expt y eq;
 --   * operadores unarios: not, add1, sub1, zero?.
 
+ASA : nat                      { Num $1 }
+    | bool                     { Boolean $1 }
     | '(' '+' args ')'          { Add $3 }
     | '(' '-' args ')'          { Sub $3 }
     | '(' '*' args ')'          { Mul $3 }
@@ -53,11 +51,17 @@ ASA : nat                      { Num $1 }
     | '(' "add1" ASA ')'        { Add1 $3 }
     | '(' "sub1" ASA ')'        { Sub1 $3 }
     | '(' "zero?" ASA ')'       { ZeroP $3 }
+    | '(' '<' args ')'          { Lt $3 }
+    | '(' '>' args ')'          { Gt $3 } 
+    | '(' "<=" args ')'         { Le $3 }
+    | '(' ">=" args ')'         { Ge $3 }
 
 -- RETO 3:
 -- Agrega un no terminal para representar dos o mas argumentos.
 -- El resultado debe ser una lista de ASA.
 
+args : ASA ASA                  {[$1,$2]}
+    |args ASA                   {$1 ++ [$2]}
 {
 parseError :: [Token] -> a
 parseError toks = error ("Parse error: " ++ show toks)
