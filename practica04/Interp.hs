@@ -1,5 +1,6 @@
 module Interp where
 
+import Data.List (nub)
 import Grammars
 
 data ASA
@@ -26,19 +27,30 @@ type Env = [(Nombre, Value)]
 -- Convierte una lista no vacia de parametros distintos en funciones
 -- unarias anidadas. El primer parametro queda en la funcion exterior.
 curryFun :: [Nombre] -> ASA -> Maybe ASA
+curryFun [] _ = Nothing
+curryFun params body
+  | nub params /= params = Nothing -- Para cuando hay parametros repetidos
+  | otherwise = Just (foldr Fun body params)
 
 -- Convierte una aplicacion con uno o mas argumentos en aplicaciones unarias
 -- asociadas por la izquierda.
 curryApp :: ASA -> [ASA] -> Maybe ASA
+curryApp _ [] = Nothing
+curryApp f args = Just (foldl App f args)
 
 -- Convierte dos o mas operandos en operaciones binarias asociadas por la
 -- izquierda. El constructor recibido sera Add o Sub.
 binaryOp :: (ASA -> ASA -> ASA) -> [ASA] -> Maybe ASA
+binaryOp op (e1 : e2 : es) = Just (foldl op (op e1 e2) es)
+binaryOp _ _ = Nothing -- Para cuando hay menos de dos operandos
 
 -- Convierte las ligaduras de let* en let anidados y despues elimina cada let
 -- mediante LetS x e1 e2 ==> App (Fun x e2') e1'. La primera ligadura debe
 -- quedar en el let exterior para que las siguientes puedan usarla.
 desugar :: SASA -> Maybe ASA
+desugar (IdS x) = Just (Id x)
+desugar (NumS n) = Just (Num n)
+desugar (BooleanS b) = Just (Boolean b)
 
 -- RETO 2: evaluacion con cerraduras ---------------------------------------
 
