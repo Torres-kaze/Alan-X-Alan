@@ -1,5 +1,6 @@
 module Interp where
 
+import Data.List (nub)
 import Grammars
 
 data ASA
@@ -28,8 +29,19 @@ type Env = [(Nombre, Value)]
 -- Recupera estas funciones del laboratorio 4. Las funciones y aplicaciones
 -- del nucleo siguen siendo unarias, y las operaciones siguen siendo binarias.
 curryFun :: [Nombre] -> ASA -> Maybe ASA
+curryFun [] _ = Nothing
+curryFun params body
+  | nub params /= params = Nothing -- Para cuando hay parametros repetidos
+  | otherwise = Just (foldr Fun body params)
+
 curryApp :: ASA -> [ASA] -> Maybe ASA
+curryApp _ [] = Nothing
+curryApp f args = Just (foldl App f args)
+
 binaryOp :: (ASA -> ASA -> ASA) -> [ASA] -> Maybe ASA
+binaryOp op (e1 : e2 : es) = Just (foldl op (op e1 e2) es)
+binaryOp _ _ = Nothing -- Para cuando hay menos de dos operandos
+
 
 -- Desazucara las clausulas ordinarias de cond en If anidados. La alternativa
 -- else es el ultimo argumento y se conserva como la rama final.
