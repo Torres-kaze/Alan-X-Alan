@@ -21,9 +21,11 @@ combinadorY =
 
 -- Evalua combinadorY en el ambiente vacio y asocia su valor con el nombre Y.
 prelude :: Env
-prelude = case bigStep [] combinadorY of
-  Just v  -> [("Y", v)]
-  Nothing -> []
+prelude = ligaY (bigStep [] combinadorY)
+
+ligaY :: Maybe Value -> Env
+ligaY (Just v) = [("Y", v)]
+ligaY Nothing = []
 
 -- Integra el analisis, el desazucarado y la evaluacion desde prelude.
 -- El resultado final debe pasar por strict antes de devolverse.

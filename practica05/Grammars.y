@@ -57,6 +57,11 @@ SASA : var                               { IdS $1 }
      | '(' "letrec" '(' var SASA ')' SASA ')'
                                          { LetRecS $4 $5 $7 }
 
+-- Clauses junta las clausulas que siguen a la primera y la expresion del
+-- else. Las regresamos como un par (clausulas, alternativa) para armar CondS.
+Clauses : '(' "else" SASA ')'            { ([], $3) }
+        | '(' SASA SASA ')' Clauses      { (($2, $3) : fst $5, snd $5) }
+
 Params : var                             { [$1] }
        | var Params                      { $1 : $2 }
 

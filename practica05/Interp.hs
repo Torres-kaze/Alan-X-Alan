@@ -128,11 +128,17 @@ lookupEnv x ((y, v) : env)
 -- Exige una cerradura de expresion usando el ambiente guardado. Si al
 -- evaluarla se obtiene otra ExprV, continua hasta producir otro valor.
 strict :: Value -> Maybe Value
-strict :: Value -> Maybe Value
-strict (NumV n) = Just (NumV n)
-strict (BooleanV b) = Just (BooleanV b)
-strict (ClosureV x b env) = Just (ClosureV x b env)
-strict (ExprV e env) = bigStep env e >>= strict
+strict (ExprV e env) = evaluaEstricto env e
+strict v = Just v
+
+-- Evaluamos la expresion y exigimos lo que resulte. Es lo que usamos en
+-- cada punto estricto.
+evaluaEstricto :: Env -> ASA -> Maybe Value
+evaluaEstricto env e = exige (bigStep env e)
+ 
+exige :: Maybe Value -> Maybe Value
+exige (Just w) = strict w
+exige Nothing = Nothing
 
 -- Semantica de paso grande con alcance estatico y evaluacion perezosa.
 --
@@ -145,38 +151,44 @@ strict (ExprV e env) = bigStep env e >>= strict
 --
 -- La resta sobre naturales permanece truncada en cero.
 bigStep :: Env -> ASA -> Maybe Value
+bigStep env (Id x) = lookupEnv x env
 bigStep _ (Num n) = Just (NumV n)
 bigStep _ (Boolean b) = Just (BooleanV b)
-bigStep env (Id x) = lookupEnv x env
-bigStep env (Fun p cuerpo) = Just (ClosureV p cuerpo env)
-bigStep env (Add e1 e2) = do
-  n1 <- fuerzaNum env e1
-  n2 <- fuerzaNum env e2
-  Just (NumV (n1 + n2))
-bigStep env (Sub e1 e2) = do
-  n1 <- fuerzaNum env e1
-  n2 <- fuerzaNum env e2
-  Just (NumV (max 0 (n1 - n2)))
-bigStep env (Not e) = do
-  b <- fuerzaBool env e
-  Just (BooleanV (not b))
-bigStep env (If c t e) = do
-  b <- fuerzaBool env c
-  if b then bigStep env t else bigStep env e
-bigStep env (App f a) =
-  case bigStep env f >>= strict of
-    Just (ClosureV p cuerpo envCierre) ->
-      bigStep ((p, ExprV a env) : envCierre) cuerpo
-    _ -> Nothing
-
--- Auxiliares: evaluan una expresion, la fuerzan (punto estricto) y exigen
--- que el valor obtenido sea del tipo que la operacion necesita.
-fuerzaNum :: Env -> ASA -> Maybe Int
-fuerzaNum env e = case bigStep env e >>= strict of
-  Just (NumV n) -> Just n
-  _ -> Nothing
+bigStep env (Add e1 e2) =
+  suma (evaluaEstricto env e1) (evaluaEstricto env e2)
+bigStep env (Sub e1 e2) =
+  resta (evaluaEstricto env e1) (evaluaEstricto env e2)
+bigStep env (Not e) = niega (evaluaEstricto env e)
+bigStep env (If c e1 e2) = eligeRama (evaluaEstricto env c) e1 e2 env
+bigStep env (Fun param body) = Just (ClosureV param body env)
+-- El argumento no se evalua aqui, lo pasamos tal cual junto con el ambiente
+-- de la llamada.
+bigStep env (App f arg) = aplica (evaluaEstricto env f) arg env
  
-fuerzaBool :: Env -> ASA -> Maybe Bool
-fuerzaBool env e = case bigStep env e >>= strict of
-  Just (BooleanV b) -> Just b
-  _ -> Nothing
+-- Funciones auxiliares de bigStep. Reciben los valores ya exigidos; si no
+-- tienen la forma que esperamos la evaluacion queda bloqueada con Nothing.
+suma :: Maybe Value -> Maybe Value -> Maybe Value
+suma (Just (NumV n1)) (Just (NumV n2)) = Just (NumV (n1 + n2))
+suma _ _ = Nothing
+ 
+resta :: Maybe Value -> Maybe Value -> Maybe Value
+resta (Just (NumV n1)) (Just (NumV n2)) = Just (NumV (max 0 (n1 - n2)))
+resta _ _ = Nothing
+ 
+niega :: Maybe Value -> Maybe Value
+niega (Just (BooleanV b)) = Just (BooleanV (not b))
+niega (Just (NumV _)) = Just (BooleanV False) -- Todo numero cuenta como verdadero
+niega _ = Nothing
+ 
+eligeRama :: Maybe Value -> ASA -> ASA -> Env -> Maybe Value
+eligeRama (Just (BooleanV True)) e1 _ env = bigStep env e1
+eligeRama (Just (BooleanV False)) _ e2 env = bigStep env e2
+eligeRama _ _ _ _ = Nothing
+ 
+-- Evaluamos el cuerpo en el ambiente que guardo la cerradura, agregando el
+-- parametro ligado al argumento sin evaluar (ExprV) con el ambiente de la
+-- llamada.
+aplica :: Maybe Value -> ASA -> Env -> Maybe Value
+aplica (Just (ClosureV param body closureEnv)) arg env =
+  bigStep ((param, ExprV arg env) : closureEnv) body
+aplica _ _ _ = Nothing
