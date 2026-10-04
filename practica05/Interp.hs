@@ -128,6 +128,11 @@ lookupEnv x ((y, v) : env)
 -- Exige una cerradura de expresion usando el ambiente guardado. Si al
 -- evaluarla se obtiene otra ExprV, continua hasta producir otro valor.
 strict :: Value -> Maybe Value
+strict :: Value -> Maybe Value
+strict (NumV n) = Just (NumV n)
+strict (BooleanV b) = Just (BooleanV b)
+strict (ClosureV x b env) = Just (ClosureV x b env)
+strict (ExprV e env) = bigStep env e >>= strict
 
 -- Semantica de paso grande con alcance estatico y evaluacion perezosa.
 --
@@ -140,3 +145,38 @@ strict :: Value -> Maybe Value
 --
 -- La resta sobre naturales permanece truncada en cero.
 bigStep :: Env -> ASA -> Maybe Value
+bigStep _ (Num n) = Just (NumV n)
+bigStep _ (Boolean b) = Just (BooleanV b)
+bigStep env (Id x) = lookupEnv x env
+bigStep env (Fun p cuerpo) = Just (ClosureV p cuerpo env)
+bigStep env (Add e1 e2) = do
+  n1 <- fuerzaNum env e1
+  n2 <- fuerzaNum env e2
+  Just (NumV (n1 + n2))
+bigStep env (Sub e1 e2) = do
+  n1 <- fuerzaNum env e1
+  n2 <- fuerzaNum env e2
+  Just (NumV (max 0 (n1 - n2)))
+bigStep env (Not e) = do
+  b <- fuerzaBool env e
+  Just (BooleanV (not b))
+bigStep env (If c t e) = do
+  b <- fuerzaBool env c
+  if b then bigStep env t else bigStep env e
+bigStep env (App f a) =
+  case bigStep env f >>= strict of
+    Just (ClosureV p cuerpo envCierre) ->
+      bigStep ((p, ExprV a env) : envCierre) cuerpo
+    _ -> Nothing
+
+-- Auxiliares: evaluan una expresion, la fuerzan (punto estricto) y exigen
+-- que el valor obtenido sea del tipo que la operacion necesita.
+fuerzaNum :: Env -> ASA -> Maybe Int
+fuerzaNum env e = case bigStep env e >>= strict of
+  Just (NumV n) -> Just n
+  _ -> Nothing
+ 
+fuerzaBool :: Env -> ASA -> Maybe Bool
+fuerzaBool env e = case bigStep env e >>= strict of
+  Just (BooleanV b) -> Just b
+  _ -> Nothing
