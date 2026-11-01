@@ -15,12 +15,10 @@ potenciaCola base exponente = potenciaCola' base exponente 1
     potenciaCola' _ 0 acc = acc
     potenciaCola' b e acc = potenciaCola' b (e - 1) (b * acc)
 
-
 potenciaCPS :: Int -> Int -> (Int -> r) -> r
 potenciaCPS _ 0 k = k 1
 potenciaCPS base exponente k =
   potenciaCPS base (exponente - 1) (\v -> k (base * v))
-
 
 -- 2. Longitud de una lista -------------------------------------------------
 
@@ -35,13 +33,11 @@ longitudCola xs = longitudCola' xs 0
     longitudCola' [] acc = acc
     longitudCola' (_ : ys) acc = longitudCola' ys (acc + 1)
 
-
 longitudCPS :: [a] -> (Int -> r) -> r
 longitudCPS xs k = longitudCPS' xs 0
   where
     longitudCPS' [] acc = k acc
     longitudCPS' (_ : ys) acc = longitudCPS' ys (acc + 1)
-
 
 -- 3. Reversa de una lista --------------------------------------------------
 
@@ -50,10 +46,16 @@ reversa [] = []
 reversa (x : xs) = reversa xs ++ [x]
 
 reversaCola :: [a] -> [a]
-reversaCola = undefined
+reversaCola xs = reversaCola' xs []
+  where
+    reversaCola' [] acc = acc
+    reversaCola' (y : ys) acc = reversaCola' ys (y : acc)
 
 reversaCPS :: [a] -> ([a] -> r) -> r
-reversaCPS = undefined
+reversaCPS xs k = reversaCPS' xs k []
+  where
+    reversaCPS' [] k acc = k acc
+    reversaCPS' (y : ys) k acc = reversaCPS' ys k (y : acc)
 
 -- 4. Concatenacion de una lista de listas ---------------------------------
 
@@ -62,10 +64,16 @@ concatena [] = []
 concatena (xs : xss) = xs ++ concatena xss
 
 concatenaCola :: [[a]] -> [a]
-concatenaCola = undefined
+concatenaCola xs = concatenaCola' xs []
+  where
+    concatenaCola' [] acc = acc
+    concatenaCola' (ys : yss) acc = concatenaCola' yss (acc ++ ys)
 
 concatenaCPS :: [[a]] -> ([a] -> r) -> r
-concatenaCPS = undefined
+concatenaCPS xs k = concatenaCPS' xs k []
+  where
+    concatenaCPS' [] k acc = k acc
+    concatenaCPS' (ys : yss) k acc = concatenaCPS' yss k (acc ++ ys)
 
 -- 5. Intercalado de dos listas --------------------------------------------
 
