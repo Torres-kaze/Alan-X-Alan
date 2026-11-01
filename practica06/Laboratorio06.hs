@@ -84,7 +84,13 @@ intercala (x : xs) (y : ys) =
   x : y : intercala xs ys
 
 intercalaCola :: [a] -> [a] -> [a]
-intercalaCola = undefined
-
+intercalaCola xs ys = intercalaCola' xs ys []
+  where
+    intercalaCola' [] ys acc = reversaCola acc ++ ys
+    intercalaCola' xs [] acc = reversaCola acc ++ xs
+    intercalaCola' (x : xs) (y : ys) acc = intercalaCola' xs ys (y : x : acc)
+    
 intercalaCPS :: [a] -> [a] -> ([a] -> r) -> r
-intercalaCPS = undefined
+intercalaCPS [] ys k = k ys
+intercalaCPS xs [] k = k xs
+intercalaCPS (x : xs) (y : ys) k = intercalaCPS xs ys (\acc -> k (x : y : acc))
